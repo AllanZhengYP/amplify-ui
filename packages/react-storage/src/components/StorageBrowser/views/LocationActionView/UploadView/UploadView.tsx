@@ -67,14 +67,16 @@ export function UploadView({
   const isAddFilesDisabled = isProcessing || isProcessingComplete;
   const isAddFolderDisabled = isProcessing || isProcessingComplete;
   const isActionExitDisabled = isProcessing;
-
-  const message = isProcessingComplete
+  const destinationList = (location.key || '/').split('/');
+  const actionCompleteMessage = isProcessingComplete
     ? getActionCompleteMessage({
         counts: statusCounts,
       })
-    : invalidFiles && !isProcessing
-    ? getFilesValidationMessage({ invalidFiles })
     : undefined;
+  const filesValidationMessage =
+    invalidFiles && !isProcessing
+      ? getFilesValidationMessage({ invalidFiles })
+      : undefined;
 
   return (
     <div className={resolveClassName(STORAGE_BROWSER_BLOCK, className)}>
@@ -96,7 +98,7 @@ export function UploadView({
           isOverwritingEnabled,
           overwriteToggleLabel,
           destination: location,
-          message,
+          message: actionCompleteMessage ?? filesValidationMessage,
           statusCounts,
           statusDisplayCanceledLabel,
           statusDisplayCompletedLabel,
