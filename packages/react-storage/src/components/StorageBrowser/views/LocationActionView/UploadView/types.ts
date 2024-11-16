@@ -1,5 +1,5 @@
 import { LocationData, UploadHandlerData } from '../../../actions';
-import { FileItem } from '../../../providers';
+import { FileItem, FileItems } from '../../../providers';
 import {
   ActionViewComponent,
   ActionViewProps,
@@ -11,6 +11,7 @@ export interface UploadViewState extends ActionViewState<FileItem> {
   onDropFiles: (files: File[]) => void;
   onSelectFiles: (type: 'FILE' | 'FOLDER') => void;
   onToggleOverwrite: () => void;
+  invalidFiles: FileItems | undefined;
 }
 
 export interface UploadViewProps

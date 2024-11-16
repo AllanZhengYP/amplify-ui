@@ -17,6 +17,7 @@ export const useUploadView = (
   const getInput = useGetActionInput();
   const [{ files, location }, dispatchStoreAction] = useStore();
   const { current, key } = location;
+  const { validFiles, invalidFiles } = files ?? {};
 
   const [isOverwritingEnabled, setIsOverwritingEnabled] = React.useState(
     DEFAULT_OVERWRITE_ENABLED
@@ -25,8 +26,14 @@ export const useUploadView = (
   const [
     { isProcessing, isProcessingComplete, statusCounts, tasks },
     handleProcess,
-  ] = useProcessTasks(uploadHandler, files, {
+  ] = useProcessTasks(uploadHandler, validFiles, {
     concurrency: DEFAULT_ACTION_CONCURRENCY,
+    // TODO: in reality, this should be on `onTaskStart` hood. But we don't have it today.
+    onTaskProgress: () => {
+      if (invalidFiles) {
+        dispatchStoreAction({ type: 'RESET_INVALID_FILE_ITEMS' });
+      }
+    },
   });
 
   const onDropFiles = React.useCallback(
@@ -81,6 +88,7 @@ export const useUploadView = (
     isProcessingComplete,
     isOverwritingEnabled,
     location,
+    invalidFiles,
     statusCounts,
     tasks,
     onActionCancel,

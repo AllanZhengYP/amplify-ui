@@ -1,5 +1,6 @@
 import { DEFAULT_ACTION_VIEW_DISPLAY_TEXT } from './shared';
 import { DefaultUploadViewDisplayText } from '../../types';
+import { UPLOAD_FILE_SIZE_LIMIT } from '../../../views/LocationActionView/constants';
 
 export const DEFAULT_UPLOAD_VIEW_DISPLAY_TEXT: DefaultUploadViewDisplayText = {
   ...DEFAULT_ACTION_VIEW_DISPLAY_TEXT,
@@ -78,6 +79,19 @@ export const DEFAULT_UPLOAD_VIEW_DISPLAY_TEXT: DefaultUploadViewDisplayText = {
     }
 
     return { content: 'All files uploaded.', type };
+  },
+  getFilesValidationMessage: ({ invalidFiles } = {}) => {
+    if (!invalidFiles?.length) {
+      return undefined;
+    }
+    const fileNames = invalidFiles
+      .filter(({ file }) => file.size > UPLOAD_FILE_SIZE_LIMIT)
+      .map(({ file }) => file.name)
+      .join(', ');
+    return {
+      content: `These files cannot be added to the upload queue due to they are larger than 160GB respectively: ${fileNames}`,
+      type: 'warning',
+    };
   },
   statusDisplayOverwritePreventedLabel: 'Overwrite prevented',
   overwriteToggleLabel: 'Overwrite existing files',

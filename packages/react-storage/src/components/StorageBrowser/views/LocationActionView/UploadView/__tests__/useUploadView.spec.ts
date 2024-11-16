@@ -4,6 +4,7 @@ import { LocationData } from '../../../../actions';
 import * as ConfigModule from '../../../../providers/configuration';
 import * as StoreModule from '../../../../providers/store';
 import * as TasksModule from '../../../../tasks';
+import { UPLOAD_FILE_SIZE_LIMIT } from '../../constants';
 
 const useStoreSpy = jest.spyOn(StoreModule, 'useStore');
 
@@ -16,13 +17,12 @@ const rootLocation: LocationData = {
   type: 'BUCKET',
 };
 
+const mockUserStoreState = {
+  location: { current: rootLocation, path: '', key: '' },
+  files: undefined,
+} as StoreModule.UseStoreState;
 const dispatchStoreAction = jest.fn();
-useStoreSpy.mockReturnValue([
-  {
-    location: { current: rootLocation, path: '', key: '' },
-  } as StoreModule.UseStoreState,
-  dispatchStoreAction,
-]);
+useStoreSpy.mockReturnValue([mockUserStoreState, dispatchStoreAction]);
 
 const credentials = jest.fn();
 const config: ConfigModule.GetActionInput = jest.fn(() => ({
@@ -42,6 +42,15 @@ const fileItemTwo = {
   id: 'some-uuid',
   file: testFileTwo,
   key: testFileTwo.name,
+};
+const invalidFile = {
+  ...new File([], 'invalid-file'),
+  size: UPLOAD_FILE_SIZE_LIMIT + 1,
+};
+const invalidFileItem = {
+  id: 'invalid-file-uuid',
+  file: invalidFile,
+  key: invalidFile.name,
 };
 
 jest.spyOn(ConfigModule, 'useGetActionInput').mockReturnValue(config);
@@ -77,6 +86,7 @@ const useProcessTasksSpy = jest
 
 describe('useUploadView', () => {
   afterEach(() => {
+    mockUserStoreState.files = undefined;
     jest.clearAllMocks();
   });
 
@@ -91,6 +101,37 @@ describe('useUploadView', () => {
     expect(dispatchStoreAction).toHaveBeenCalledWith({
       type: 'ADD_FILE_ITEMS',
       files: [testFileOne],
+    });
+  });
+
+  it('should return invalidFiles from store', () => {
+    mockUserStoreState.files = {
+      validFiles: [],
+      invalidFiles: [invalidFileItem],
+    };
+    const { result } = renderHook(() => useUploadView());
+
+    expect(result.current.invalidFiles).toEqual([invalidFileItem]);
+  });
+
+  it('should clear invalidFiles after upload is started', () => {
+    mockUserStoreState.files = {
+      validFiles: [fileItemOne],
+      invalidFiles: [invalidFileItem],
+    };
+    renderHook(() => useUploadView());
+
+    expect(useProcessTasksSpy).toHaveBeenCalledTimes(1);
+    const onTaskProgressCallback =
+      useProcessTasksSpy.mock.calls[0][2]?.onTaskProgress;
+    expect(onTaskProgressCallback).toBeDefined();
+    act(() => {
+      // @ts-expect-error Input is not needed
+      onTaskProgressCallback?.();
+    });
+    expect(dispatchStoreAction).toHaveBeenCalledTimes(1);
+    expect(dispatchStoreAction).toHaveBeenCalledWith({
+      type: 'RESET_INVALID_FILE_ITEMS',
     });
   });
 
@@ -134,6 +175,7 @@ describe('useUploadView', () => {
       destinationPrefix: '',
     });
   });
+
   it('should call cancel on each pending task when onCancel is invoked', () => {
     const tasks: TasksModule.Task<StoreModule.FileItem>[] = [
       { ...taskOne, status: 'PENDING' },

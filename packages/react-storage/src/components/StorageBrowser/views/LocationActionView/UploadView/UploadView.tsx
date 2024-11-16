@@ -43,6 +43,7 @@ export function UploadView({
     overwriteToggleLabel,
     title,
     getActionCompleteMessage,
+    getFilesValidationMessage,
   } = displayText;
 
   const {
@@ -52,6 +53,7 @@ export function UploadView({
     location,
     tasks,
     statusCounts,
+    invalidFiles,
     onActionStart,
     onActionCancel,
     onDropFiles,
@@ -68,12 +70,15 @@ export function UploadView({
   const isAddFolderDisabled = isProcessing || isProcessingComplete;
   const isActionExitDisabled = isProcessing;
   const destinationList = (location.key || '/').split('/');
-
-  const message = isProcessingComplete
+  const actionCompleteMessage = isProcessingComplete
     ? getActionCompleteMessage({
         counts: statusCounts,
       })
     : undefined;
+  const filesValidationMessage =
+    invalidFiles && !isProcessing
+      ? getFilesValidationMessage({ invalidFiles })
+      : undefined;
 
   return (
     <div className={resolveClassName(STORAGE_BROWSER_BLOCK, className)}>
@@ -92,7 +97,7 @@ export function UploadView({
           isOverwriteToggleDisabled: isProcessing || isProcessingComplete,
           isOverwritingEnabled,
           overwriteToggleLabel,
-          message,
+          message: actionCompleteMessage ?? filesValidationMessage,
           statusCounts,
           statusDisplayCanceledLabel,
           statusDisplayCompletedLabel,
