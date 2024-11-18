@@ -55,7 +55,9 @@
 
 .storage-browser__message-dismiss {
   flex: 0 0 auto;
+  margin-left: auto;
 }
+
 .storage-browser__message-content {
   flex: 1 1 auto;
 }
