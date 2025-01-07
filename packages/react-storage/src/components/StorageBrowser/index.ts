@@ -5,6 +5,7 @@ export {
   ActionHandler,
   FileDataItem,
   ExtendedActionConfigs,
+  defaultActionConfigs,
 } from './actions';
 export {
   createAmplifyAuthAdapter,

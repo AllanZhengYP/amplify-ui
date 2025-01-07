@@ -99,6 +99,7 @@ export interface TaskHandlerInput<
   config: ActionInputConfig;
   data: T;
   options?: K;
+  tracer?: any;
 }
 
 export interface TaskHandlerOutput<K = any> {

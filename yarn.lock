@@ -19710,7 +19710,7 @@ maplibre-gl-draw-circle@^0.1.1:
     "@turf/helpers" "^6.1.4"
     "@turf/length" "^6.0.2"
 
-maplibre-gl-js-amplify@4.0.2:
+maplibre-gl-js-amplify@^4.0.2:
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/maplibre-gl-js-amplify/-/maplibre-gl-js-amplify-4.0.2.tgz#83ac6270a6ee78c0051df79a3bbf13eccb86f7c3"
   integrity sha512-A8AzXJ1x3mgwU+ofQrJNNtPd2bNzXjsZcEBvQiaSigSS9EdIUy/trtuV232i2YDM7nZDGR/otAALrttWhWTLeg==

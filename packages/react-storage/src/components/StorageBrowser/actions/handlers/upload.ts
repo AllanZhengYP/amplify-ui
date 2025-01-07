@@ -42,7 +42,7 @@ export const UNDEFINED_CALLBACKS = {
   resume: undefined,
 };
 
-export const uploadHandler: UploadHandler = ({ config, data, options }) => {
+export const uploadHandler: UploadHandler = ({ config, data, options, tracer }) => {
   const { accountId, credentials, customEndpoint } = config;
   const { key, file, preventOverwrite } = data;
   const { onProgress } = options ?? {};
@@ -60,6 +60,7 @@ export const uploadHandler: UploadHandler = ({ config, data, options }) => {
       preventOverwrite,
       customEndpoint,
       checksumAlgorithm: DEFAULT_CHECKSUM_ALGORITHM,
+      tracer
     },
   };
 
