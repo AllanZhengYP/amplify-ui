@@ -1,4 +1,3 @@
-import { dedup } from '@aws-amplify/ui';
 import {
   ClientSessionInformationEvent,
   LivenessResponseStream,
@@ -6,16 +5,6 @@ import {
 } from '@aws-sdk/client-rekognitionstreaming';
 import { nanoid } from 'nanoid';
 import { createMachine, assign, actions, spawn } from 'xstate';
-
-import {
-  getColorsSequencesFromSessionInformation,
-  getFaceMatchState,
-  getBoundingBox,
-  getIntersectionOverUnion,
-  getOvalBoundingBox,
-  isFaceDistanceBelowThreshold,
-  generateBboxFromLandmarks,
-} from '../utils/liveness';
 
 import {
   ErrorState,
@@ -35,6 +24,13 @@ import {
 import {
   BlazeFaceFaceDetection,
   drawLivenessOvalInCanvas,
+  getColorsSequencesFromSessionInformation,
+  getFaceMatchState,
+  getBoundingBox,
+  getIntersectionOverUnion,
+  getOvalBoundingBox,
+  isFaceDistanceBelowThreshold,
+  generateBboxFromLandmarks,
   getFaceMatchStateInLivenessOval,
   getOvalDetailsFromSessionInformation,
   LivenessStreamProvider,
@@ -42,6 +38,7 @@ import {
   isCameraDeviceVirtual,
   FreshnessColorDisplay,
   drawStaticOval,
+  serviceDeduplication,
 } from '../utils';
 
 import { getStaticLivenessOvalDetails } from '../utils/liveness';
@@ -960,8 +957,8 @@ export const livenessMachine = createMachine<LivenessContext, LivenessEvent>(
       },
     },
     services: {
-      checkVirtualCameraAndGetStream: dedup(
-        async function _checkVirtualCameraAndGetStream(context) {
+      checkVirtualCameraAndGetStream: serviceDeduplication(
+        async function _checkVirtualCameraAndGetStream(context: LivenessContext) {
           const { videoConstraints } = context.videoAssociatedParams!;
 
           const devices = await navigator.mediaDevices.enumerateDevices();

@@ -200,6 +200,7 @@ describe('Liveness Machine', () => {
   describe('cameraCheck', () => {
     it('should reach waitForDOMAndCameraDetails state on checkVirtualCameraAndGetStream success', async () => {
       transitionToCameraCheck(service);
+      service.send('BEGIN'); // Duplicate the event to mock React strict mode.
 
       await flushPromises();
       expect(service.state.value).toBe('waitForDOMAndCameraDetails');
