@@ -38,7 +38,7 @@ import {
   isCameraDeviceVirtual,
   FreshnessColorDisplay,
   drawStaticOval,
-  serviceDeduplication,
+  getUserMedia,
 } from '../utils';
 
 import { getStaticLivenessOvalDetails } from '../utils/liveness';
@@ -644,8 +644,10 @@ export const livenessMachine = createMachine<LivenessContext, LivenessEvent>(
       }),
       stopRecording: () => {},
       updateFaceMatchBeforeStartDetails: assign({
-        faceMatchStateBeforeStart: (_, event) =>
-          event.data!.faceMatchState as FaceMatchState,
+        faceMatchStateBeforeStart: (_, event) => {
+          console.log('updateFaceMatchBeforeStartDetails', event.data!.faceMatchState);
+          return event.data!.faceMatchState as FaceMatchState;
+        }
       }),
       updateFaceDistanceBeforeRecording: assign({
         isFaceFarEnoughBeforeRecording: (_, event) =>
@@ -957,8 +959,7 @@ export const livenessMachine = createMachine<LivenessContext, LivenessEvent>(
       },
     },
     services: {
-      checkVirtualCameraAndGetStream: serviceDeduplication(
-        async function _checkVirtualCameraAndGetStream(context: LivenessContext) {
+        async checkVirtualCameraAndGetStream(context: LivenessContext) {
           const { videoConstraints } = context.videoAssociatedParams!;
 
           const devices = await navigator.mediaDevices.enumerateDevices();
@@ -971,13 +972,10 @@ export const livenessMachine = createMachine<LivenessContext, LivenessEvent>(
           }
 
           const existingDeviceId = getLastSelectedCameraId();
-          const initialStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              ...videoConstraints,
-              ...(existingDeviceId ? { deviceId: existingDeviceId } : {}),
-            },
-            audio: false,
-          });
+          const initialStream = await getUserMedia({
+            ...videoConstraints,
+            ...(existingDeviceId ? { deviceId: existingDeviceId } : {})
+          })
 
           // Ensure that at least one of the cameras is capable of at least 15 fps
           const tracksWithMoreThan15Fps = initialStream
@@ -1019,8 +1017,7 @@ export const livenessMachine = createMachine<LivenessContext, LivenessEvent>(
             selectedDeviceId: initialStreamDeviceId,
             selectableDevices: realVideoDevices,
           };
-        }
-      ),
+        },
       // eslint-disable-next-line @typescript-eslint/require-await
       async openLivenessStreamConnection(context) {
         const { config } = context.componentProps!;
@@ -1054,9 +1051,12 @@ export const livenessMachine = createMachine<LivenessContext, LivenessEvent>(
         // detect face
         const faceMatchState = await getFaceMatchState(faceDetector!, videoEl!);
 
+        console.log('detectFace', faceMatchState);
+
         return { faceMatchState };
       },
       async detectFaceDistance(context) {
+        console.log('detectFaceDistance');
         const {
           isFaceFarEnoughBeforeRecording: faceDistanceCheckBeforeRecording,
         } = context;
@@ -1081,6 +1081,8 @@ export const livenessMachine = createMachine<LivenessContext, LivenessEvent>(
             reduceThreshold: faceDistanceCheckBeforeRecording, // if this is the second face distance check reduce the threshold
             isMobile,
           });
+        
+        console.log('detectFaceDistance', isFaceFarEnoughBeforeRecording);
 
         return { isFaceFarEnoughBeforeRecording };
       },

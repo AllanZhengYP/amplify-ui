@@ -5,3 +5,4 @@ export * from './liveness';
 export * from './getFaceMatchStateInLivenessOval';
 export * from './streamProvider';
 export * from './freshnessColorDisplay';
+export * from './getUserMedia';

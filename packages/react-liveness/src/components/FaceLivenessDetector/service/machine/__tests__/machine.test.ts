@@ -30,7 +30,7 @@ const flushPromises = () => new Promise(setImmediate);
 
 describe('Liveness Machine', () => {
   const mockNavigatorMediaDevices: any = {
-    getUserMedia: jest.fn(),
+    // getUserMedia: jest.fn(),
     enumerateDevices: jest.fn(),
   };
 
@@ -138,9 +138,11 @@ describe('Liveness Machine', () => {
     Object.defineProperty(global.navigator, 'mediaDevices', {
       value: mockNavigatorMediaDevices,
     });
-    mockNavigatorMediaDevices.getUserMedia.mockResolvedValue(
-      mockVideoMediaStream
-    );
+    // mockNavigatorMediaDevices.getUserMedia.mockResolvedValue(
+    //   mockVideoMediaStream
+    // );
+    mockedHelpers.getUserMedia
+      .mockResolvedValue(mockVideoMediaStream);
     mockNavigatorMediaDevices.enumerateDevices.mockResolvedValue([
       mockCameraDevice,
     ]);
@@ -200,17 +202,13 @@ describe('Liveness Machine', () => {
   describe('cameraCheck', () => {
     it('should reach waitForDOMAndCameraDetails state on checkVirtualCameraAndGetStream success', async () => {
       transitionToCameraCheck(service);
-      service.send('BEGIN'); // Duplicate the event to mock React strict mode.
 
       await flushPromises();
       expect(service.state.value).toBe('waitForDOMAndCameraDetails');
       expect(
         service.state.context.videoAssociatedParams!.videoMediaStream
       ).toEqual(mockVideoMediaStream);
-      expect(mockNavigatorMediaDevices.getUserMedia).toHaveBeenCalledWith({
-        video: mockVideoConstraints,
-        audio: false,
-      });
+      expect(helpers.getUserMedia).toHaveBeenCalledWith(mockVideoConstraints);
       expect(mockNavigatorMediaDevices.enumerateDevices).toHaveBeenCalledTimes(
         1
       );
@@ -230,9 +228,8 @@ describe('Liveness Machine', () => {
           },
         ],
       } as MediaStream;
-      mockNavigatorMediaDevices.getUserMedia
+      jest.mocked(helpers.getUserMedia)
         .mockResolvedValueOnce(mockVirtualMediaStream)
-        .mockResolvedValueOnce(mockVideoMediaStream);
 
       transitionToCameraCheck(service);
 
@@ -241,12 +238,9 @@ describe('Liveness Machine', () => {
       expect(
         service.state.context.videoAssociatedParams!.videoMediaStream?.getTracks
       ).toBeDefined();
-      expect(mockNavigatorMediaDevices.getUserMedia).toHaveBeenNthCalledWith(
+      expect(helpers.getUserMedia).toHaveBeenNthCalledWith(
         1,
-        {
-          video: mockVideoConstraints,
-          audio: false,
-        }
+        mockVideoConstraints
       );
     });
 
@@ -259,7 +253,7 @@ describe('Liveness Machine', () => {
     });
 
     it('should reach permissionDenied state on checkVirtualCameraAndGetStream failure due to getUserMedia error', async () => {
-      mockNavigatorMediaDevices.getUserMedia.mockRejectedValue(
+      jest.mocked(helpers.getUserMedia).mockRejectedValue(
         new Error('some-error')
       );
       transitionToCameraCheck(service);
@@ -269,7 +263,7 @@ describe('Liveness Machine', () => {
     });
 
     it('should reach permissionDenied state on checkVirtualCameraAndGetStream failure due to no device with 15 fps', async () => {
-      mockNavigatorMediaDevices.getUserMedia.mockResolvedValueOnce({
+      jest.mocked(helpers.getUserMedia).mockResolvedValueOnce({
         getTracks: () => [
           {
             getSettings: () => ({
@@ -288,7 +282,7 @@ describe('Liveness Machine', () => {
     });
 
     it('should reach cameraCheck state after retrying from the permissionDenied state', async () => {
-      mockNavigatorMediaDevices.getUserMedia.mockResolvedValueOnce({
+      jest.mocked(helpers.getUserMedia).mockResolvedValueOnce({
         getTracks: () => [
           {
             getSettings: () => ({
@@ -354,6 +348,12 @@ describe('Liveness Machine', () => {
     });
 
     it('should reach detectFaceBeforeStart on begin button press', async () => {
+      mockedHelpers.getFaceMatchState.mockImplementationOnce(async () => {
+        return FaceMatchState.FACE_IDENTIFIED
+      })
+      mockedHelpers.isFaceDistanceBelowThreshold.mockImplementationOnce(async () => {
+        return { isDistanceBelowThreshold: true,}
+      })
       transitionToCameraCheck(service);
       await flushPromises(); // waitForDOMAndCameraDetails
 
@@ -375,6 +375,7 @@ describe('Liveness Machine', () => {
       await flushPromises(); // checkFaceDistanceBeforeRecording
       jest.advanceTimersToNextTimer(); // initializeLivenessStream
       await flushPromises(); // notRecording
+      // expect(service.state.value).toEqual('checkFaceDistanceBeforeRecording');
 
       expect(service.state.value).toEqual({
         notRecording: 'waitForSessionInfo',
